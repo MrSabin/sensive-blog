@@ -1,6 +1,19 @@
-from django.db import models
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models import Count
+from django.urls import reverse
+
+
+class PostQuerySet(models.QuerySet):
+    def year(self, year):
+        posts_at_year = self.filter(published_at__year=year).order_by("published_at")
+        return posts_at_year
+
+
+class TagQuerySet(models.QuerySet):
+    def popular(self):
+        popular_tags = self.annotate(post_count=Count("posts")).order_by("-post_count")
+        return popular_tags
 
 
 class Post(models.Model):
@@ -16,9 +29,7 @@ class Post(models.Model):
         verbose_name="Автор",
         limit_choices_to={"is_staff": True},
     )
-    likes = models.ManyToManyField(
-        User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True
-    )
+    likes = models.ManyToManyField(User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True)
     tags = models.ManyToManyField("Tag", related_name="posts", verbose_name="Теги")
 
     def __str__(self):
@@ -31,6 +42,8 @@ class Post(models.Model):
         ordering = ["-published_at"]
         verbose_name = "пост"
         verbose_name_plural = "посты"
+
+    objects = PostQuerySet.as_manager()
 
 
 class Tag(models.Model):
@@ -49,6 +62,8 @@ class Tag(models.Model):
         ordering = ["title"]
         verbose_name = "тег"
         verbose_name_plural = "теги"
+
+    objects = TagQuerySet.as_manager()
 
 
 class Comment(models.Model):
