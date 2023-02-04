@@ -5,10 +5,6 @@ from django.urls import reverse
 
 
 class PostQuerySet(models.QuerySet):
-    def year(self, year):
-        posts_at_year = self.filter(published_at__year=year).order_by("published_at")
-        return posts_at_year
-
     def popular(self):
         popular_posts = self.annotate(likes_count=Count("likes")).order_by("-likes_count")
         return popular_posts
