@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.urls import reverse
 
 
@@ -8,6 +8,11 @@ class PostQuerySet(models.QuerySet):
     def popular(self):
         popular_posts = self.annotate(likes_count=Count("likes")).order_by("-likes_count")
         return popular_posts
+
+    def prefetch_tags(self):
+        annotated_tags = Tag.objects.annotate(posts_count=Count("posts"))
+        posts_with_tags = self.prefetch_related("author", Prefetch("tags", queryset=annotated_tags))
+        return posts_with_tags
 
     def fetch_with_comments_count(self):
         # Function greatly reduces DB queries compared to using annotate twice
